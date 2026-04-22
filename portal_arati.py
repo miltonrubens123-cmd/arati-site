@@ -1788,14 +1788,15 @@ st.markdown(
 st.caption("Gestão de demandas e acompanhamento em tempo real")
 
 menu_options_admin = [
-    "Nova Solicitação",
-    "Demandas Solicitadas",
-    "Dashboard",
-    "Cadastro de Clientes",
-    "Cadastro de Empresas",
-    "Cadastro de Atendentes",
-    "Painel de Cadastros",
+    "Dashboard RH",
+    "Quadro de Funcionários",
+    "Cadastro de Colaboradores",
+    "Cadastro de Filiais",
+    "Cadastro de Setores",
+    "Cadastro de Cargos",
 ]
+
+st.session_state.menu_atual = "Dashboard RH"
 menu_options_cliente = ["Nova Solicitação", "Demandas Solicitadas"]
 menu_options_atendente = ["Demandas Solicitadas"]
 
