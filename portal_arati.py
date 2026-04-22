@@ -1720,13 +1720,12 @@ def svg_menu_icon(kind):
 
 def render_sidebar_menu(menu_options, current_menu, logo_b64):
     icon_map = {
-        "Dashboard": "dashboard",
-        "Demandas Solicitadas": "demandas",
-        "Nova Solicitação": "nova",
-        "Cadastro de Empresas": "clientes",
-        "Cadastro de Clientes": "clientes",
-        "Cadastro de Atendentes": "atendentes",
-        "Painel de Cadastros": "cadastros",
+        "Dashboard RH": "dashboard",
+        "Quadro de Funcionários": "demandas",
+        "Cadastro de Colaboradores": "clientes",
+        "Cadastro de Filiais": "clientes",
+        "Cadastro de Setores": "cadastros",
+        "Cadastro de Cargos": "atendentes",
     }
 
     if logo_b64:
@@ -2516,211 +2515,159 @@ elif menu == "Dashboard" and perfil_atual == "admin":
     else:
         st.info("Nenhuma solicitação registrada ainda.")
 
-elif menu == "Cadastro de Empresas" and perfil_atual == "admin":
-    st.header("Cadastro de Empresas")
+elif menu == "Cadastro de Filiais" and perfil_atual == "admin":
+    st.header("Cadastro de Filiais")
 
-    with st.expander("Cadastro de Empresa", expanded=True):
+    with st.expander("Nova filial", expanded=True):
         c1, c2 = st.columns(2)
         with c1:
-            cnpj = st.text_input("CNPJ", key="empresa_cnpj")
-            razao_social = st.text_input("Razão Social", key="empresa_razao_social")
-            fantasia = st.text_input("Nome Fantasia", key="empresa_fantasia")
-            cep = st.text_input("CEP", key="empresa_cep")
+            nome_filial = st.text_input("Nome da Filial", key="filial_nome")
+            cidade_filial = st.text_input("Cidade", key="filial_cidade")
         with c2:
-            logradouro = st.text_input("Logradouro", key="empresa_logradouro")
-            numero = st.text_input("Número", key="empresa_numero")
-            bairro = st.text_input("Bairro", key="empresa_bairro")
-            cidade = st.text_input("Cidade", key="empresa_cidade")
+            uf_filial = st.text_input("UF", key="filial_uf", max_chars=2)
+            ativo_filial = st.checkbox("Ativa", value=True, key="filial_ativo")
 
-        if st.button("Cadastrar Empresa", key="btn_cadastrar_empresa"):
-            if not fantasia.strip() or not razao_social.strip():
-                st.error("Preencha pelo menos Razão Social e Nome Fantasia.")
+        if st.button("Cadastrar Filial", key="btn_cadastrar_filial"):
+            if not nome_filial.strip():
+                st.error("Informe o nome da filial.")
             else:
                 conn.execute(
                     """
-                    INSERT INTO empresas
-                    (cnpj, razao_social, fantasia, cep, logradouro, numero, bairro, cidade, ativo)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+                    INSERT INTO filiais (nome, cidade, uf, ativo)
+                    VALUES (%s, %s, %s, %s)
                     """,
                     (
-                        formatar_cnpj(cnpj.strip()),
-                        razao_social.strip(),
-                        fantasia.strip(),
-                        cep.strip(),
-                        logradouro.strip(),
-                        numero.strip(),
-                        bairro.strip(),
-                        cidade.strip(),
+                        nome_filial.strip(),
+                        cidade_filial.strip(),
+                        uf_filial.strip().upper(),
+                        ativo_filial,
                     ),
                 )
-                st.success("Empresa cadastrada com sucesso.")
+                st.success("Filial cadastrada com sucesso.")
                 st.rerun()
 
     st.markdown("---")
-    st.subheader("Empresas cadastradas")
+    st.subheader("Filiais cadastradas")
 
-    if "empresa_editando_id" not in st.session_state:
-        st.session_state.empresa_editando_id = None
+    if "filial_editando_id" not in st.session_state:
+        st.session_state.filial_editando_id = None
 
-    empresas = conn.execute(
+    filiais = conn.execute(
         """
         SELECT
             id,
-            cnpj,
-            razao_social,
-            fantasia,
-            cep,
-            logradouro,
-            numero,
-            bairro,
+            nome,
             cidade,
+            uf,
             ativo
-        FROM empresas
-        ORDER BY fantasia, razao_social
+        FROM filiais
+        ORDER BY nome
         """
     ).fetchall()
 
-    if empresas:
-        empresas, _, _ = paginar_registros(
-            empresas, "pagina_empresas_cadastro", page_size=10
+    if filiais:
+        filiais, _, _ = paginar_registros(
+            filiais, "pagina_filiais_cadastro", page_size=10
         )
 
-        for emp in empresas:
-            empresa_id = emp["id"]
+        for filial in filiais:
+            filial_id = filial["id"]
 
             with st.container(border=True):
-                col1, col2, col3, col4 = st.columns([2.2, 2.5, 1.2, 3.1])
+                col1, col2, col3 = st.columns([2.6, 1.5, 3.2])
 
                 with col1:
-                    st.write(f"**{emp['fantasia'] or 'Sem fantasia'}**")
-                    st.caption(emp["razao_social"] or "")
+                    st.write(f"**{filial['nome']}**")
+                    localizacao = " • ".join(
+                        [x for x in [filial["cidade"] or "", filial["uf"] or ""] if x]
+                    )
+                    st.caption(localizacao)
 
                 with col2:
-                    st.write(f"CNPJ: {emp['cnpj'] or ''}")
-                    endereco = " • ".join(
-                        [
-                            x
-                            for x in [
-                                emp["cidade"] or "",
-                                emp["bairro"] or "",
-                                emp["logradouro"] or "",
-                                emp["numero"] or "",
-                            ]
-                            if x
-                        ]
-                    )
-                    st.caption(endereco)
+                    st.write("Ativa" if bool(filial["ativo"]) else "Inativa")
 
                 with col3:
-                    status_empresa = "Ativa" if bool(emp["ativo"]) else "Inativa"
-                    st.write(status_empresa)
-
-                with col4:
                     b1, b2, b3 = st.columns(3)
 
                     with b1:
-                        if bool(emp["ativo"]):
+                        if bool(filial["ativo"]):
                             if st.button(
                                 "Inativar",
-                                key=f"inativar_empresa_{empresa_id}",
+                                key=f"inativar_filial_{filial_id}",
                                 use_container_width=True,
                             ):
                                 conn.execute(
-                                    "UPDATE empresas SET ativo = FALSE WHERE id = %s",
-                                    (empresa_id,),
+                                    "UPDATE filiais SET ativo = FALSE WHERE id = %s",
+                                    (filial_id,),
                                 )
                                 st.rerun()
                         else:
                             if st.button(
                                 "Ativar",
-                                key=f"ativar_empresa_{empresa_id}",
+                                key=f"ativar_filial_{filial_id}",
                                 use_container_width=True,
                             ):
                                 conn.execute(
-                                    "UPDATE empresas SET ativo = TRUE WHERE id = %s",
-                                    (empresa_id,),
+                                    "UPDATE filiais SET ativo = TRUE WHERE id = %s",
+                                    (filial_id,),
                                 )
                                 st.rerun()
 
                     with b2:
                         if st.button(
                             "Excluir",
-                            key=f"excluir_empresa_{empresa_id}",
+                            key=f"excluir_filial_{filial_id}",
                             use_container_width=True,
                         ):
-                            possui_clientes = conn.execute(
-                                "SELECT 1 FROM clientes WHERE empresa_id = %s LIMIT 1",
-                                (empresa_id,),
+                            possui_colaboradores = conn.execute(
+                                "SELECT 1 FROM colaboradores WHERE filial_id = %s LIMIT 1",
+                                (filial_id,),
                             ).fetchone()
 
-                            if possui_clientes:
+                            if possui_colaboradores:
                                 st.warning(
-                                    "Esta empresa possui clientes vinculados. Inative ao invés de excluir."
+                                    "Esta filial possui colaboradores vinculados. Inative ao invés de excluir."
                                 )
                             else:
                                 conn.execute(
-                                    "DELETE FROM empresas WHERE id = %s",
-                                    (empresa_id,),
+                                    "DELETE FROM filiais WHERE id = %s",
+                                    (filial_id,),
                                 )
-                                st.success("Empresa excluída.")
+                                st.success("Filial excluída.")
                                 st.rerun()
 
                     with b3:
                         if st.button(
                             "Alterar",
-                            key=f"alterar_empresa_{empresa_id}",
+                            key=f"alterar_filial_{filial_id}",
                             use_container_width=True,
                         ):
-                            st.session_state.empresa_editando_id = empresa_id
+                            st.session_state.filial_editando_id = filial_id
                             st.rerun()
 
-                if st.session_state.empresa_editando_id == empresa_id:
-                    st.markdown("**Alteração de empresa**")
+                if st.session_state.filial_editando_id == filial_id:
+                    st.markdown("**Alteração de filial**")
 
                     e1, e2 = st.columns(2)
 
                     with e1:
-                        novo_cnpj = st.text_input(
-                            "CNPJ",
-                            value=emp["cnpj"] or "",
-                            key=f"edit_empresa_cnpj_{empresa_id}",
+                        novo_nome_filial = st.text_input(
+                            "Nome da Filial",
+                            value=filial["nome"] or "",
+                            key=f"edit_filial_nome_{filial_id}",
                         )
-                        nova_razao = st.text_input(
-                            "Razão Social",
-                            value=emp["razao_social"] or "",
-                            key=f"edit_empresa_razao_{empresa_id}",
-                        )
-                        nova_fantasia = st.text_input(
-                            "Nome Fantasia",
-                            value=emp["fantasia"] or "",
-                            key=f"edit_empresa_fantasia_{empresa_id}",
-                        )
-                        novo_cep = st.text_input(
-                            "CEP",
-                            value=emp["cep"] or "",
-                            key=f"edit_empresa_cep_{empresa_id}",
+                        nova_cidade_filial = st.text_input(
+                            "Cidade",
+                            value=filial["cidade"] or "",
+                            key=f"edit_filial_cidade_{filial_id}",
                         )
 
                     with e2:
-                        novo_logradouro = st.text_input(
-                            "Logradouro",
-                            value=emp["logradouro"] or "",
-                            key=f"edit_empresa_logradouro_{empresa_id}",
-                        )
-                        novo_numero = st.text_input(
-                            "Número",
-                            value=emp["numero"] or "",
-                            key=f"edit_empresa_numero_{empresa_id}",
-                        )
-                        novo_bairro = st.text_input(
-                            "Bairro",
-                            value=emp["bairro"] or "",
-                            key=f"edit_empresa_bairro_{empresa_id}",
-                        )
-                        nova_cidade = st.text_input(
-                            "Cidade",
-                            value=emp["cidade"] or "",
-                            key=f"edit_empresa_cidade_{empresa_id}",
+                        nova_uf_filial = st.text_input(
+                            "UF",
+                            value=filial["uf"] or "",
+                            key=f"edit_filial_uf_{filial_id}",
+                            max_chars=2,
                         )
 
                     a1, a2 = st.columns(2)
@@ -2728,51 +2675,41 @@ elif menu == "Cadastro de Empresas" and perfil_atual == "admin":
                     with a1:
                         if st.button(
                             "Salvar alteração",
-                            key=f"salvar_empresa_{empresa_id}",
+                            key=f"salvar_filial_{filial_id}",
                             use_container_width=True,
                         ):
-                            if not nova_razao.strip() or not nova_fantasia.strip():
-                                st.error("Preencha Razão Social e Nome Fantasia.")
+                            if not novo_nome_filial.strip():
+                                st.error("Informe o nome da filial.")
                             else:
                                 conn.execute(
                                     """
-                                    UPDATE empresas
-                                    SET cnpj = %s,
-                                        razao_social = %s,
-                                        fantasia = %s,
-                                        cep = %s,
-                                        logradouro = %s,
-                                        numero = %s,
-                                        bairro = %s,
-                                        cidade = %s
+                                    UPDATE filiais
+                                    SET nome = %s,
+                                        cidade = %s,
+                                        uf = %s
                                     WHERE id = %s
                                     """,
                                     (
-                                        formatar_cnpj(novo_cnpj.strip()),
-                                        nova_razao.strip(),
-                                        nova_fantasia.strip(),
-                                        novo_cep.strip(),
-                                        novo_logradouro.strip(),
-                                        novo_numero.strip(),
-                                        novo_bairro.strip(),
-                                        nova_cidade.strip(),
-                                        empresa_id,
+                                        novo_nome_filial.strip(),
+                                        nova_cidade_filial.strip(),
+                                        nova_uf_filial.strip().upper(),
+                                        filial_id,
                                     ),
                                 )
-                                st.session_state.empresa_editando_id = None
-                                st.success("Empresa atualizada com sucesso.")
+                                st.session_state.filial_editando_id = None
+                                st.success("Filial atualizada com sucesso.")
                                 st.rerun()
 
                     with a2:
                         if st.button(
                             "Cancelar alteração",
-                            key=f"cancelar_empresa_{empresa_id}",
+                            key=f"cancelar_filial_{filial_id}",
                             use_container_width=True,
                         ):
-                            st.session_state.empresa_editando_id = None
+                            st.session_state.filial_editando_id = None
                             st.rerun()
     else:
-        st.info("Nenhuma empresa cadastrada ainda.")
+        st.info("Nenhuma filial cadastrada ainda.")
 
 
 elif menu == "Cadastro de Clientes" and perfil_atual == "admin":
