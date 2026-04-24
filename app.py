@@ -172,7 +172,7 @@ def tela_login():
     with col_logo:
 
         try:
-            st.image("app/imagens/logo.png", width=160)
+            st.image("aplicativo/imagens/Logo.png", width=160)
         except:
             st.write("")
 
