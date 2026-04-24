@@ -171,7 +171,10 @@ def tela_login():
 
     with col_logo:
 
-        st.image("app/imagens/logo.png", width=160)
+        try:
+            st.image("app/imagens/logo.png", width=160)
+        except:
+            st.write("")
 
         st.markdown("## Contas a pagar")
 
