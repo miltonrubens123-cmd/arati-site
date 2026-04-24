@@ -117,39 +117,64 @@ def tela_login():
             max-width: 1200px;
         }
 
-        .login-card {
-            background: #161B26;
+        div[data-testid="stForm"] {
+            background: transparent;
             border: 1px solid #2A2F3A;
-            border-radius: 18px;
-            padding: 36px;
-            box-shadow: 0 12px 30px rgba(0,0,0,.25);
+            border-radius: 14px;
+            padding: 22px;
         }
 
         .login-title {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 800;
             margin-bottom: 4px;
         }
 
         .login-subtitle {
             color: #AAB0BD;
-            margin-bottom: 20px;
-            font-size: 14px;
+            margin-bottom: 28px;
+            font-size: 15px;
+        }
+
+        .brand-panel {
+            background: linear-gradient(145deg, #E41E2B 0%, #9F111B 100%);
+            border-radius: 22px;
+            padding: 48px 36px;
+            min-height: 520px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,.30);
+        }
+
+        .brand-title {
+            font-size: 34px;
+            font-weight: 900;
+            color: white;
+            line-height: 1.1;
+            margin-top: 24px;
+        }
+
+        .brand-subtitle {
+            color: rgba(255,255,255,.85);
+            font-size: 16px;
+            margin-top: 14px;
+            max-width: 420px;
         }
     </style>
     """,
         unsafe_allow_html=True,
     )
 
-    col_logo, col_login = st.columns([1.1, 1])
+    col_logo, col_login = st.columns([1.15, 1])
 
-    # 🔹 LADO ESQUERDO
+    
     with col_logo:
 
         try:
-            st.image("aplicativo/imagens/Logo.png", width=140)
+            st.image("aplicativo/imagens/Logo.png", width=160)
         except:
-            pass
+            st.write("")
 
         st.markdown("## Contas a pagar")
 
@@ -162,11 +187,7 @@ def tela_login():
             """
         )
 
-    # 🔹 LADO DIREITO
     with col_login:
-
-        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-
         st.markdown(
             """
             <div class='login-title'>Acesso ao sistema</div>
@@ -183,8 +204,6 @@ def tela_login():
             entrar = st.form_submit_button(
                 "Entrar", type="primary", use_container_width=True
             )
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
     if entrar:
         usuario_limpo = usuario.strip().lower()
