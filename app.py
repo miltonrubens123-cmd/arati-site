@@ -168,11 +168,10 @@ def tela_login():
 
     col_logo, col_login = st.columns([1.15, 1])
 
-    
     with col_logo:
 
         try:
-            st.image("aplicativo/imagens/Logo.png", width=160)
+            st.image("app/imagens/Logo.png", width=160)
         except:
             st.write("")
 
@@ -422,47 +421,6 @@ def carregar_bases_processadas():
 
 def formatar_moeda(v):
     return f"R$ {float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-
-
-def status_vencimento(data_vencimento, status_normalizado):
-    if status_normalizado == "PAGO":
-        return "Pago"
-
-    if pd.isna(data_vencimento) or data_vencimento is None:
-        return "Sem vencimento"
-
-    hoje = date.today()
-
-    if data_vencimento < hoje:
-        return "Vencido"
-
-    if data_vencimento == hoje:
-        return "Vence hoje"
-
-    return "A vencer"
-
-
-def preparar_colunas_inteligencia(df):
-    if df.empty:
-        return df
-
-    df = df.copy()
-
-    df["Situação"] = df.apply(
-        lambda r: status_vencimento(
-            r.get("Data Vencimento Ajustada"),
-            r.get("Status Normalizado", ""),
-        ),
-        axis=1,
-    )
-
-    hoje = date.today()
-    df["Dias para vencimento"] = df["Data Vencimento Ajustada"].apply(
-        lambda d: (d - hoje).days if pd.notna(d) and d is not None else None
-    )
-
-    return df
 
 
 def limitar_opcoes(lista, limite=300):
@@ -821,7 +779,7 @@ with st.sidebar:
     st.caption(f"Filial: {st.session_state.get('filial', '-')}")
     st.caption(f"Usuário: {st.session_state.get('usuario', '-')}")
 
-    pagina = st.radio("Menu", ["Dashboard", "Lançamentos e Baixa", "Inteligência Financeira"])
+    pagina = st.radio("Menu", ["Dashboard", "Lançamentos e Baixa"])
 
     if st.button("Atualizar dados"):
         st.cache_data.clear()
@@ -833,8 +791,6 @@ with st.sidebar:
 
 with st.spinner("Carregando dados do Smartsheet..."):
     df_contas, df_forn, df_plano, col_map_contas = carregar_bases_processadas()
-
-df_contas = preparar_colunas_inteligencia(df_contas)
 
 # ========================
 # BASES DISPONÍVEIS
@@ -895,21 +851,6 @@ if pagina == "Dashboard":
             & (df_contas["Data Pgto Ajustada"] <= fim_mes)
         )
     ].copy()
-
-    vencidos_mes = df_mes[df_mes["Situação"] == "Vencido"]
-    vence_hoje_mes = df_mes[df_mes["Situação"] == "Vence hoje"]
-
-    if len(vencidos_mes) > 0:
-        st.error(
-            f"Atenção: existem {len(vencidos_mes)} títulos vencidos no filtro, "
-            f"totalizando {formatar_moeda(vencidos_mes['Valor Original Num'].sum())}."
-        )
-
-    if len(vence_hoje_mes) > 0:
-        st.warning(
-            f"Hoje vencem {len(vence_hoje_mes)} títulos, "
-            f"totalizando {formatar_moeda(vence_hoje_mes['Valor Original Num'].sum())}."
-        )
 
     descricoes = ["Todas"]
     if not df_mes.empty:
@@ -1023,8 +964,6 @@ if pagina == "Dashboard":
         COL["vencimento"],
         COL["valor_original"],
         COL["status"],
-        "Situação",
-        "Dias para vencimento",
         COL["data_pgto"],
         COL["valor_pago"],
         COL["descricao"],
@@ -1348,160 +1287,3 @@ if pagina == "Lançamentos e Baixa":
                 st.cache_data.clear()
                 st.success("Baixa registrada com sucesso.")
                 st.rerun()
-
-
-# ============================================================
-# INTELIGÊNCIA FINANCEIRA
-# ============================================================
-
-if pagina == "Inteligência Financeira":
-    st.subheader("Inteligência Financeira")
-
-    if df_contas.empty:
-        st.warning("Nenhum lançamento encontrado.")
-        st.stop()
-
-    hoje = date.today()
-
-    colf1, colf2, colf3, colf4 = st.columns(4)
-
-    horizonte = colf1.selectbox(
-        "Horizonte",
-        ["7 dias", "15 dias", "30 dias", "60 dias", "90 dias"],
-        index=2,
-    )
-
-    dias_horizonte = int(horizonte.split()[0])
-
-    base_filtro = ["Todas"] + bases_opcoes
-    filtro_base_intel = colf2.selectbox("Base", base_filtro, index=0)
-
-    situacao_filtro = colf3.selectbox(
-        "Situação",
-        ["Todas", "Vencido", "Vence hoje", "A vencer", "Pago"],
-        index=0,
-    )
-
-    fornecedor_busca = colf4.text_input("Fornecedor/CNPJ")
-
-    df_intel = df_contas.copy()
-
-    if filtro_base_intel != "Todas" and COL["base"] in df_intel.columns:
-        df_intel = df_intel[df_intel[COL["base"]].astype(str) == filtro_base_intel]
-
-    if situacao_filtro != "Todas":
-        df_intel = df_intel[df_intel["Situação"] == situacao_filtro]
-
-    if fornecedor_busca:
-        mask = texto_pesquisa_df(df_intel).str.contains(
-            fornecedor_busca.upper(), na=False, regex=False
-        )
-        df_intel = df_intel[mask]
-
-    df_aberto = df_intel[df_intel["Status Normalizado"] != "PAGO"].copy()
-
-    df_vencidos = df_aberto[df_aberto["Situação"] == "Vencido"].copy()
-    df_vence_hoje = df_aberto[df_aberto["Situação"] == "Vence hoje"].copy()
-    df_proximos = df_aberto[
-        (df_aberto["Data Vencimento Ajustada"].notna())
-        & (df_aberto["Data Vencimento Ajustada"] > hoje)
-        & (df_aberto["Data Vencimento Ajustada"] <= (hoje + pd.Timedelta(days=dias_horizonte)).date())
-    ].copy()
-
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Vencido", formatar_moeda(df_vencidos["Valor Original Num"].sum()))
-    k2.metric("Vence hoje", formatar_moeda(df_vence_hoje["Valor Original Num"].sum()))
-    k3.metric(f"Próx. {dias_horizonte} dias", formatar_moeda(df_proximos["Valor Original Num"].sum()))
-    k4.metric("Total aberto", formatar_moeda(df_aberto["Valor Original Num"].sum()))
-
-    st.divider()
-
-    tab1, tab2, tab3 = st.tabs([
-        "Prioridade de pagamento",
-        "Top fornecedores",
-        "Previsão de caixa",
-    ])
-
-    with tab1:
-        st.markdown("#### Títulos para atenção")
-
-        df_prioridade = df_aberto.copy()
-        df_prioridade = df_prioridade.sort_values(
-            by=["Data Vencimento Ajustada", "Valor Original Num"],
-            ascending=[True, False],
-        )
-
-        colunas_prioridade = [
-            COL["fornecedor"],
-            COL["cnpj"],
-            COL["base"],
-            "Descrição conta",
-            COL["vencimento"],
-            "Dias para vencimento",
-            "Situação",
-            COL["valor_original"],
-            COL["descricao"],
-        ]
-
-        colunas_prioridade = [c for c in colunas_prioridade if c in df_prioridade.columns]
-
-        st.dataframe(
-            df_prioridade[colunas_prioridade].head(300),
-            use_container_width=True,
-            height=460,
-        )
-
-    with tab2:
-        st.markdown("#### Maiores fornecedores em aberto")
-
-        if df_aberto.empty or COL["fornecedor"] not in df_aberto.columns:
-            st.info("Sem dados para o filtro selecionado.")
-        else:
-            top_fornecedores = (
-                df_aberto.groupby(COL["fornecedor"], dropna=False)
-                .agg(
-                    Valor_Aberto=("Valor Original Num", "sum"),
-                    Qtd=("row_id", "count"),
-                )
-                .reset_index()
-                .sort_values("Valor_Aberto", ascending=False)
-                .head(20)
-            )
-
-            st.dataframe(
-                top_fornecedores,
-                use_container_width=True,
-                height=420,
-            )
-
-    with tab3:
-        st.markdown("#### Previsão por vencimento")
-
-        df_prev = df_aberto[
-            df_aberto["Data Vencimento Ajustada"].notna()
-        ].copy()
-
-        if df_prev.empty:
-            st.info("Sem vencimentos em aberto para previsão.")
-        else:
-            df_prev["Vencimento"] = pd.to_datetime(df_prev["Data Vencimento Ajustada"])
-            previsao = (
-                df_prev.groupby("Vencimento")
-                .agg(
-                    Valor=("Valor Original Num", "sum"),
-                    Qtd=("row_id", "count"),
-                )
-                .reset_index()
-                .sort_values("Vencimento")
-            )
-
-            st.line_chart(
-                previsao.set_index("Vencimento")["Valor"],
-                use_container_width=True,
-            )
-
-            st.dataframe(
-                previsao.head(120),
-                use_container_width=True,
-                height=300,
-            )
