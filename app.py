@@ -175,7 +175,7 @@ def tela_login():
         try:
             st.image("aplicativo/imagens/Logo.png", width=160)
         except:
-            st.write("")
+            pass
 
         st.markdown("## Contas a pagar")
 
@@ -187,8 +187,7 @@ def tela_login():
             Integrado com Smartsheet para gestão ágil e eficiente das finanças.
             """
         )
-
-        st.markdown("</div>", unsafe_allow_html=True)
+        
 
     with col_login:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
