@@ -169,6 +169,7 @@ def tela_login():
 
     col_logo, col_login = st.columns([1.15, 1])
 
+    
     with col_logo:
 
         try:
