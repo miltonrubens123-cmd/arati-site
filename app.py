@@ -117,11 +117,12 @@ def tela_login():
             max-width: 1200px;
         }
 
-        div[data-testid="stForm"] {
-            background: transparent;
+        .login-card {
+            background: #161B26;
             border: 1px solid #2A2F3A;
-            border-radius: 14px;
-            padding: 22px;
+            border-radius: 18px;
+            padding: 36px;
+            box-shadow: 0 12px 30px rgba(0,0,0,.25);
         }
 
         .login-title {
@@ -186,7 +187,11 @@ def tela_login():
             """
         )
 
+        st.markdown("</div>", unsafe_allow_html=True)
+
     with col_login:
+        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+
         st.markdown(
             """
             <div class='login-title'>Acesso ao sistema</div>
@@ -203,6 +208,8 @@ def tela_login():
             entrar = st.form_submit_button(
                 "Entrar", type="primary", use_container_width=True
             )
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if entrar:
         usuario_limpo = usuario.strip().lower()
