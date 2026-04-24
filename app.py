@@ -126,54 +126,28 @@ def tela_login():
         }
 
         .login-title {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 800;
             margin-bottom: 4px;
         }
 
         .login-subtitle {
             color: #AAB0BD;
-            margin-bottom: 28px;
-            font-size: 15px;
-        }
-
-        .brand-panel {
-            background: linear-gradient(145deg, #E41E2B 0%, #9F111B 100%);
-            border-radius: 22px;
-            padding: 48px 36px;
-            min-height: 520px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 12px 30px rgba(0,0,0,.30);
-        }
-
-        .brand-title {
-            font-size: 34px;
-            font-weight: 900;
-            color: white;
-            line-height: 1.1;
-            margin-top: 24px;
-        }
-
-        .brand-subtitle {
-            color: rgba(255,255,255,.85);
-            font-size: 16px;
-            margin-top: 14px;
-            max-width: 420px;
+            margin-bottom: 20px;
+            font-size: 14px;
         }
     </style>
     """,
         unsafe_allow_html=True,
     )
 
-    col_logo, col_login = st.columns([1.15, 1])
+    col_logo, col_login = st.columns([1.1, 1])
 
-    
+    # 🔹 LADO ESQUERDO
     with col_logo:
 
         try:
-            st.image("aplicativo/imagens/Logo.png", width=160)
+            st.image("aplicativo/imagens/Logo.png", width=140)
         except:
             pass
 
@@ -187,9 +161,10 @@ def tela_login():
             Integrado com Smartsheet para gestão ágil e eficiente das finanças.
             """
         )
-        
 
+    # 🔹 LADO DIREITO
     with col_login:
+
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
         st.markdown(
