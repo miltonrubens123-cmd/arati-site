@@ -13,7 +13,7 @@ from calendar import monthrange
 # 1) Revogue o token que foi exposto em print.
 # 2) Cole o novo token aqui para teste local.
 # 3) Depois podemos mover para .streamlit/secrets.toml.
-SMARTSHEET_TOKEN = "Wmw5xFBAyj82NOIYU2yPObLR8FtRXm6c6QgV4"
+SMARTSHEET_TOKEN = st.secrets["SMARTSHEET_TOKEN"]
 
 SHEETS = {
     "contas": "6432342517540740",
